@@ -181,9 +181,8 @@ public class Main extends SimpleApplication {
         float stepHeight = 500f;
         playerControl = new RigidBodyControl(sphereShape, stepHeight);
         playerNode.addControl(playerControl);
-        //playerControl.setRestitution(0.001f);
         playerControl.setFriction(12f);
-        playerControl.setGravity(new Vector3f(1.0f,1.0f,1.0f)); //??
+        playerControl.setGravity(new Vector3f(1.0f,1.0f,1.0f));
         playerNode.setShadowMode(ShadowMode.CastAndReceive);
 //        bulletAppState.getPhysicsSpace().add(playerControl);
     
