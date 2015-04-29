@@ -2,6 +2,7 @@ package presentation;
 
 import com.jme3.app.SimpleApplication;
 import com.jme3.bullet.BulletAppState;
+import com.jme3.bullet.PhysicsSpace;
 import com.jme3.bullet.control.RigidBodyControl;
 import com.jme3.font.BitmapText;
 import com.jme3.input.ChaseCamera;
@@ -21,6 +22,12 @@ import com.jme3.terrain.heightmap.ImageBasedHeightMap;
 import com.jme3.texture.Texture;
 import com.jme3.util.SkyFactory;
 import com.jme3.bullet.collision.shapes.SphereCollisionShape;
+import com.jme3.bullet.util.CollisionShapeFactory;
+import com.jme3.input.KeyInput;
+import com.jme3.input.MouseInput;
+import com.jme3.input.controls.ActionListener;
+import com.jme3.input.controls.KeyTrigger;
+import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.renderer.queue.RenderQueue.ShadowMode;
 import com.jme3.scene.shape.Sphere;
 
@@ -28,6 +35,7 @@ import com.jme3.scene.shape.Sphere;
 public class Main extends SimpleApplication {
     
     private TerrainQuad terrain;
+    RigidBodyControl terrainPhysicsNode;
     Material matRock;
     Material matWire;
     boolean wireframe = false;
@@ -64,6 +72,10 @@ public class Main extends SimpleApplication {
     @Override
     public void simpleInitApp() {
         
+        bulletAppState = new BulletAppState();
+        bulletAppState.setThreadingType(BulletAppState.ThreadingType.PARALLEL);
+        stateManager.attach(bulletAppState);
+        
         setupSky();
         
         setupTerrain();
@@ -73,6 +85,8 @@ public class Main extends SimpleApplication {
         setupPlayer();
         
         setupCamera();
+        
+        setupKeys();
     }
 
     
@@ -105,7 +119,7 @@ public class Main extends SimpleApplication {
         matRock.setBoolean("useTriPlanarMapping", false);
 
         // ALPHA map (for splat textures)
-//        matRock.setTexture("Alpha", assetManager.loadTexture("Textures/Terrain/splat/alphamap.png"));
+        matRock.setTexture("Alpha", assetManager.loadTexture("Textures/Terrain/splat/alphamap.png"));
 
         // HEIGHTMAP image (for the terrain heightmap)
         Texture heightMapImage = assetManager.loadTexture("Textures/Terrain/splat/mountains128.png");
@@ -155,7 +169,17 @@ public class Main extends SimpleApplication {
         terrain.setMaterial(matRock);
         terrain.setLocalTranslation(0, -100, 0);
         terrain.setLocalScale(8f, 0.5f, 8f);
+        
+        terrainPhysicsNode = new RigidBodyControl(CollisionShapeFactory.createMeshShape(terrain), 0);
+        terrain.addControl(terrainPhysicsNode);
         rootNode.attachChild(terrain);
+        
+        getPhysicsSpace().add(terrainPhysicsNode);
+    }
+    
+    
+    private PhysicsSpace getPhysicsSpace() {
+        return bulletAppState.getPhysicsSpace();
     }
     
     
@@ -184,9 +208,9 @@ public class Main extends SimpleApplication {
         playerControl.setFriction(12f);
         playerControl.setGravity(new Vector3f(1.0f,1.0f,1.0f));
         playerNode.setShadowMode(ShadowMode.CastAndReceive);
-//        bulletAppState.getPhysicsSpace().add(playerControl);
-    
+        bulletAppState.getPhysicsSpace().add(playerControl);
     }
+    
     
     
     private void setupCamera() {
@@ -195,7 +219,88 @@ public class Main extends SimpleApplication {
         ChaseCamera camera = new ChaseCamera(cam, playerNode, inputManager);
         camera.setDragToRotate(false);
     }
-   
     
+    
+   
+    private void setupKeys() {
+        
+//        inputManager.addMapping("Strafe Left", 
+//                new KeyTrigger(KeyInput.KEY_Q), 
+//                new KeyTrigger(KeyInput.KEY_Z));
+//        inputManager.addMapping("Strafe Right", 
+//                new KeyTrigger(KeyInput.KEY_E),
+//                new KeyTrigger(KeyInput.KEY_X));
+//        inputManager.addMapping("Rotate Left", 
+//                new KeyTrigger(KeyInput.KEY_A), 
+//                new KeyTrigger(KeyInput.KEY_LEFT));
+//        inputManager.addMapping("Rotate Right", 
+//                new KeyTrigger(KeyInput.KEY_D), 
+//                new KeyTrigger(KeyInput.KEY_RIGHT));
+//        inputManager.addMapping("Walk Forward", 
+//                new KeyTrigger(KeyInput.KEY_W), 
+//                new KeyTrigger(KeyInput.KEY_UP));
+//        inputManager.addMapping("Walk Backward", 
+//                new KeyTrigger(KeyInput.KEY_S),
+//                new KeyTrigger(KeyInput.KEY_DOWN));
+//        inputManager.addMapping("Jump", 
+//                new KeyTrigger(KeyInput.KEY_SPACE), 
+//                new KeyTrigger(KeyInput.KEY_RETURN));
+//        inputManager.addMapping("Shoot", 
+//                new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
+//        
+//        inputManager.addListener(this, "Strafe Left", "Strafe Right");
+//        inputManager.addListener(this, "Rotate Left", "Rotate Right");
+//        inputManager.addListener(this, "Walk Forward", "Walk Backward");
+//        inputManager.addListener(this, "Jump", "Shoot");
+        
+        inputManager.addMapping("CharLeft", new KeyTrigger(KeyInput.KEY_A));
+        inputManager.addMapping("CharRight", new KeyTrigger(KeyInput.KEY_D));
+        inputManager.addMapping("CharForward", new KeyTrigger(KeyInput.KEY_W));
+        inputManager.addMapping("CharBackward", new KeyTrigger(KeyInput.KEY_S));
+        inputManager.addListener(actionListener, "CharLeft");
+        inputManager.addListener(actionListener, "CharRight");
+        inputManager.addListener(actionListener, "CharForward");
+        inputManager.addListener(actionListener, "CharBackward");
+    }
+    
+    
+    private ActionListener actionListener = new ActionListener() {
+
+        public void onAction(String binding, boolean isPressed, float tpf) {
+            
+            if (binding.equals("CharLeft")) {
+                
+                if (isPressed) {
+                    left = true;
+                } else {
+                    left = false;
+                }
+                
+            } else if (binding.equals("CharRight")) {
+                
+                if (isPressed) {
+                    right = true;
+                } else {
+                    right = false;
+                }
+                
+            } else if (binding.equals("CharForward")) {
+                
+                if (isPressed) {
+                    up = true;
+                } else {
+                    up = false;
+                }
+                
+            } else if (binding.equals("CharBackward")) {
+                
+                if (isPressed) {
+                    down = true;
+                } else {
+                    down = false;
+                }
+            }
+        }
+    };
     
 }
