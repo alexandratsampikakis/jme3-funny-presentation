@@ -83,7 +83,7 @@ public class Main extends SimpleApplication {
         
         setupLight();
         
-        setupPlayer();
+        setupPlayers();
         
         setupCamera();
         
@@ -217,7 +217,7 @@ public class Main extends SimpleApplication {
     }
     
     
-    private void setupPlayer() {
+    private void setupPlayers() {
         
         float radius = 2;
         playerNode = new Node("Player");
@@ -225,6 +225,7 @@ public class Main extends SimpleApplication {
         rootNode.attachChild(playerNode);
         playerNode.attachChild(playerGeometry);
         Material material = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
+        material.setTexture("DiffuseMap", assetManager.loadTexture("Textures/gustav.png"));
         playerGeometry.setMaterial(material);
         playerNode.setLocalTranslation(new Vector3f(0, 20, 0));
         SphereCollisionShape sphereShape = new SphereCollisionShape(radius);
