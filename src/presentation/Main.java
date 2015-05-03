@@ -53,6 +53,7 @@ public class Main extends SimpleApplication {
     private BulletAppState bulletAppState;
     
     private Vector3f walkDirection = new Vector3f(0, 0, 0);
+    
     private boolean left = false,
             right = false,
             up = false,
@@ -93,7 +94,32 @@ public class Main extends SimpleApplication {
     
     @Override
     public void simpleUpdate(float tpf) {
-        //TODO: add update code
+        
+        Vector3f camDir = cam.getDirection().clone();
+        Vector3f camLeft = cam.getLeft().clone();
+        
+        camDir.y = 0;  
+        camLeft.y = 0;
+        
+        walkDirection.set(0, 0, 0);
+
+        if (left) {
+            walkDirection.addLocal(camDir.negate());
+        }
+        
+        if (right) {
+            walkDirection.addLocal(camDir);
+        }
+        
+        if (up) {
+            walkDirection.addLocal(camLeft);
+        }
+        
+        if (down) {
+            walkDirection.addLocal(camLeft.negate());
+        }
+        
+        playerControl.setAngularVelocity(walkDirection.mult(10f));
     }
 
     
@@ -223,35 +249,6 @@ public class Main extends SimpleApplication {
     
    
     private void setupKeys() {
-        
-//        inputManager.addMapping("Strafe Left", 
-//                new KeyTrigger(KeyInput.KEY_Q), 
-//                new KeyTrigger(KeyInput.KEY_Z));
-//        inputManager.addMapping("Strafe Right", 
-//                new KeyTrigger(KeyInput.KEY_E),
-//                new KeyTrigger(KeyInput.KEY_X));
-//        inputManager.addMapping("Rotate Left", 
-//                new KeyTrigger(KeyInput.KEY_A), 
-//                new KeyTrigger(KeyInput.KEY_LEFT));
-//        inputManager.addMapping("Rotate Right", 
-//                new KeyTrigger(KeyInput.KEY_D), 
-//                new KeyTrigger(KeyInput.KEY_RIGHT));
-//        inputManager.addMapping("Walk Forward", 
-//                new KeyTrigger(KeyInput.KEY_W), 
-//                new KeyTrigger(KeyInput.KEY_UP));
-//        inputManager.addMapping("Walk Backward", 
-//                new KeyTrigger(KeyInput.KEY_S),
-//                new KeyTrigger(KeyInput.KEY_DOWN));
-//        inputManager.addMapping("Jump", 
-//                new KeyTrigger(KeyInput.KEY_SPACE), 
-//                new KeyTrigger(KeyInput.KEY_RETURN));
-//        inputManager.addMapping("Shoot", 
-//                new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
-//        
-//        inputManager.addListener(this, "Strafe Left", "Strafe Right");
-//        inputManager.addListener(this, "Rotate Left", "Rotate Right");
-//        inputManager.addListener(this, "Walk Forward", "Walk Backward");
-//        inputManager.addListener(this, "Jump", "Shoot");
         
         inputManager.addMapping("CharLeft", new KeyTrigger(KeyInput.KEY_A));
         inputManager.addMapping("CharRight", new KeyTrigger(KeyInput.KEY_D));
