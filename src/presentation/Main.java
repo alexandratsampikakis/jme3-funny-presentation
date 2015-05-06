@@ -16,24 +16,16 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.terrain.geomipmap.TerrainLodControl;
 import com.jme3.terrain.geomipmap.TerrainQuad;
-import com.jme3.terrain.geomipmap.lodcalc.DistanceLodCalculator;
 import com.jme3.terrain.heightmap.AbstractHeightMap;
 import com.jme3.terrain.heightmap.ImageBasedHeightMap;
 import com.jme3.texture.Texture;
 import com.jme3.util.SkyFactory;
 import com.jme3.bullet.collision.shapes.SphereCollisionShape;
 import com.jme3.bullet.util.CollisionShapeFactory;
-import com.jme3.cinematic.MotionPath;
-import com.jme3.cinematic.MotionPathListener;
-import com.jme3.cinematic.events.MotionEvent;
 import com.jme3.effect.ParticleEmitter;
 import com.jme3.input.KeyInput;
-import com.jme3.input.MouseInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
-import com.jme3.input.controls.MouseButtonTrigger;
-import com.jme3.math.FastMath;
-import com.jme3.math.Quaternion;
 import com.jme3.math.Vector2f;
 import com.jme3.renderer.queue.RenderQueue.ShadowMode;
 import com.jme3.scene.Spatial;
@@ -54,9 +46,6 @@ public class Main extends SimpleApplication {
     protected BitmapText hintText;
     PointLight pl;
     Geometry lightMdl;
-    private float grassScale = 64;
-    private float dirtScale = 16;
-    private float rockScale = 128;
     
     private Node playerNode;
     private Geometry playerGeometry;
@@ -83,9 +72,7 @@ public class Main extends SimpleApplication {
     
     
     public static void main(String[] args) {
-        
         Main app = new Main();
-        
         app.start();
     }
     
@@ -93,7 +80,6 @@ public class Main extends SimpleApplication {
 
     @Override
     public void simpleInitApp() {
-        
         bulletAppState = new BulletAppState();
         bulletAppState.setThreadingType(BulletAppState.ThreadingType.PARALLEL);
         stateManager.attach(bulletAppState);
@@ -115,7 +101,6 @@ public class Main extends SimpleApplication {
     
     @Override
     public void simpleUpdate(float tpf) {
-        
         Vector3f camDir = cam.getDirection().clone();
         Vector3f camLeft = cam.getLeft().clone();
         
@@ -147,13 +132,11 @@ public class Main extends SimpleApplication {
     
     @Override
     public void simpleRender(RenderManager rm) {
-        //TODO: add render code
     }
     
     
     
     private void setupSky() {
-        
         rootNode.attachChild(SkyFactory.createSky(
                 assetManager, "Textures/Sky/Bright/BrightSky.dds", false));
     }
@@ -161,7 +144,6 @@ public class Main extends SimpleApplication {
     
     
     private void setupTerrain() {
-        
         // TERRAIN TEXTURE material
         matRock = new Material(assetManager, "Common/MatDefs/Terrain/Terrain.j3md");
         matRock.setBoolean("useTriPlanarMapping", false);
@@ -169,37 +151,37 @@ public class Main extends SimpleApplication {
         // ALPHA map (for splat textures)
         matRock.setTexture("Alpha", assetManager.loadTexture("Textures/Terrain/splat/alphamap.png"));
 
-        // HEIGHTMAP image (for the terrain heightmap)
-        Texture heightMapImage = assetManager.loadTexture("Textures/Terrain/splat/mountains128.png");
-
         // GRASS texture
         Texture grass = assetManager.loadTexture("Textures/Terrain/splat/grass.jpg");
         grass.setWrap(Texture.WrapMode.Repeat);
         matRock.setTexture("Tex1", grass);
-        matRock.setFloat("Tex1Scale", grassScale);
+        matRock.setFloat("Tex1Scale", 64f);
 
         // DIRT texture
         Texture dirt = assetManager.loadTexture("Textures/Terrain/splat/dirt.jpg");
         dirt.setWrap(Texture.WrapMode.Repeat);
         matRock.setTexture("Tex2", dirt);
-        matRock.setFloat("Tex2Scale", dirtScale);
+        matRock.setFloat("Tex2Scale", 32f);
 
         // ROCK texture
         Texture rock = assetManager.loadTexture("Textures/Terrain/splat/road.jpg");
         rock.setWrap(Texture.WrapMode.Repeat);
         matRock.setTexture("Tex3", rock);
-        matRock.setFloat("Tex3Scale", rockScale);
+        matRock.setFloat("Tex3Scale", 128f);
 
         // WIREFRAME material
         matWire = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         matWire.getAdditionalRenderState().setWireframe(true);
         matWire.setColor("Color", ColorRGBA.Green);
 
+        // HEIGHTMAP image (for the terrain heightmap)
+        Texture heightMapImage = assetManager.loadTexture("Textures/Terrain/splat/mountains512.png");
+        
         // CREATE HEIGHTMAP
         AbstractHeightMap heightmap = null;
         
         try {
-            heightmap = new ImageBasedHeightMap(heightMapImage.getImage(), 0.5f);
+            heightmap = new ImageBasedHeightMap(heightMapImage.getImage(), 0.1f);
             heightmap.load();
 
         } catch (Exception e) {
@@ -248,7 +230,7 @@ public class Main extends SimpleApplication {
         double min = -500.0;
         int max = 200;
         
-        while (counter < mitvTeam.length) {
+        for (int i=0; i<mitvTeam.length; i++) {
             Node newTeamMember = new Node(mitvTeam[counter]);
             shootables.add(newTeamMember);
             
@@ -295,23 +277,25 @@ public class Main extends SimpleApplication {
         float radius = 2;
         float stepHeight = 500f;
         
+        terrain.attachChild(newTeamMember);
+        
         Material material = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
         material.setTexture("DiffuseMap", assetManager.loadTexture("Textures/gustav.png"));
         
         Geometry memberGeometry = new Geometry(newTeamMember.getName(), new Sphere(100, 100, radius));
         memberGeometry.setMaterial(material);
         
-        terrain.attachChild(newTeamMember);
         newTeamMember.attachChild(memberGeometry);
         newTeamMember.setLocalTranslation(new Vector3f(x, 20, z));
         
         SphereCollisionShape sphereShape = new SphereCollisionShape(radius);
         
-        RigidBodyControl memberControl;memberControl = new RigidBodyControl(sphereShape, stepHeight);
+        RigidBodyControl memberControl = new RigidBodyControl(sphereShape, stepHeight);
         newTeamMember.addControl(memberControl);
         memberControl.setFriction(10f);
         memberControl.setGravity(new Vector3f(1.0f, 1.0f, 1.0f));
         newTeamMember.setShadowMode(ShadowMode.CastAndReceive);
+        
         bulletAppState.getPhysicsSpace().add(memberControl);
     }
     
