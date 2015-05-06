@@ -23,13 +23,24 @@ import com.jme3.texture.Texture;
 import com.jme3.util.SkyFactory;
 import com.jme3.bullet.collision.shapes.SphereCollisionShape;
 import com.jme3.bullet.util.CollisionShapeFactory;
+import com.jme3.cinematic.MotionPath;
+import com.jme3.cinematic.MotionPathListener;
+import com.jme3.cinematic.events.MotionEvent;
+import com.jme3.effect.ParticleEmitter;
 import com.jme3.input.KeyInput;
 import com.jme3.input.MouseInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
 import com.jme3.input.controls.MouseButtonTrigger;
+import com.jme3.math.FastMath;
+import com.jme3.math.Quaternion;
+import com.jme3.math.Vector2f;
 import com.jme3.renderer.queue.RenderQueue.ShadowMode;
+import com.jme3.scene.Spatial;
+import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Sphere;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class Main extends SimpleApplication {
@@ -51,6 +62,16 @@ public class Main extends SimpleApplication {
     private Geometry playerGeometry;
     private RigidBodyControl playerControl;
     private BulletAppState bulletAppState;
+    
+    float x, y, z, ry;
+    private List<Node> shootables;
+    private float xCamCoord, yCamCoord, zCamCoord;
+    
+    // Not used
+    ParticleEmitter fire, debris;
+    Spatial wall;
+    Geometry mark;
+    
     
     private Vector3f walkDirection = new Vector3f(0, 0, 0);
     
@@ -83,7 +104,7 @@ public class Main extends SimpleApplication {
         
         setupLight();
         
-        setupPlayers();
+        setupPlayer();
         
         setupCamera();
         
@@ -128,6 +149,7 @@ public class Main extends SimpleApplication {
     public void simpleRender(RenderManager rm) {
         //TODO: add render code
     }
+    
     
     
     private void setupSky() {
@@ -177,7 +199,7 @@ public class Main extends SimpleApplication {
         AbstractHeightMap heightmap = null;
         
         try {
-            heightmap = new ImageBasedHeightMap(heightMapImage.getImage(), 1f);
+            heightmap = new ImageBasedHeightMap(heightMapImage.getImage(), 0.5f);
             heightmap.load();
 
         } catch (Exception e) {
@@ -188,19 +210,56 @@ public class Main extends SimpleApplication {
          * Here we create the actual terrain. The tiles will be 33x33, and the total size of the
          * terrain will be 129x129. It uses the heightmap we created to generate the height values.
          */
-        terrain = new TerrainQuad("terrain", 33, 129, heightmap.getHeightMap());
+        terrain = new TerrainQuad("terrain", 65, 513, heightmap.getHeightMap());
         TerrainLodControl control = new TerrainLodControl(terrain, getCamera());
-        control.setLodCalculator( new DistanceLodCalculator(33, 2.7f) ); // patch size, and a multiplier
         terrain.addControl(control);
         terrain.setMaterial(matRock);
-        terrain.setLocalTranslation(0, -100, 0);
-        terrain.setLocalScale(8f, 0.5f, 8f);
+//        terrain.setLocalTranslation(0, -100, 0);
+//        terrain.setLocalScale(8f, 0.5f, 8f);
+        terrain.setLocalTranslation(x, y, z);
+	terrain.setLocalScale(2f, 1f, 2f);
         
         terrainPhysicsNode = new RigidBodyControl(CollisionShapeFactory.createMeshShape(terrain), 0);
         terrain.addControl(terrainPhysicsNode);
         rootNode.attachChild(terrain);
         
         getPhysicsSpace().add(terrainPhysicsNode);
+        
+        setupTeamMembers();
+    }
+    
+    
+    private void setupTeamMembers() {
+        String[] mitvTeam = new String[10];
+        mitvTeam[0] = "Erik";
+        mitvTeam[1] = "Bengt";
+        mitvTeam[2] = "Foteini";
+        mitvTeam[3] = "Johan";
+        mitvTeam[4] = "Albert";
+        mitvTeam[5] = "Filipe";
+        mitvTeam[6] = "Alex";
+        mitvTeam[7] = "Calle";
+        mitvTeam[8] = "Miguel";
+        mitvTeam[9] = "Thomas";
+        
+        shootables = new ArrayList<Node>();
+        
+        int counter = 0;
+        double min = -500.0;
+        int max = 200;
+        
+        while (counter < mitvTeam.length) {
+            Node newTeamMember = new Node(mitvTeam[counter]);
+            shootables.add(newTeamMember);
+            
+            x = (float) (min * Math.random()) + max;
+            z = (float) (min * Math.random()) + max;
+            ry = (float) (min * Math.random()) + max;
+            
+            getTeamMember(newTeamMember);
+            
+            counter++;
+        }
     }
     
     
@@ -209,15 +268,55 @@ public class Main extends SimpleApplication {
     }
     
     
+    
     private void setupLight() {
-        
         DirectionalLight light = new DirectionalLight();
         light.setDirection((new Vector3f(-0.5f, -1f, -0.5f)).normalize());
         rootNode.addLight(light);
     }
     
     
-    private void setupPlayers() {
+    public Spatial drawBox() {
+        Box box = new Box(Vector3f.ZERO, 3.5f, 3.5f, 1.0f);
+        wall = new Geometry("Box", box);
+        Material mat_brick = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        mat_brick.setTexture("ColorMap", assetManager.loadTexture("Textures/Terrain/BrickWall/BrickWall.jpg"));
+        wall.setMaterial(mat_brick);
+        Vector2f xz = new Vector2f(x, z);
+        y = terrain.getHeight(xz);
+        wall.setLocalTranslation(x, y, z);
+        wall.rotate(x, ry, z);
+        terrain.attachChild(wall);
+        return wall;
+    }
+    
+    
+    public void getTeamMember(Node newTeamMember) {
+        float radius = 2;
+        float stepHeight = 500f;
+        
+        Material material = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
+        material.setTexture("DiffuseMap", assetManager.loadTexture("Textures/gustav.png"));
+        
+        Geometry memberGeometry = new Geometry(newTeamMember.getName(), new Sphere(100, 100, radius));
+        memberGeometry.setMaterial(material);
+        
+        terrain.attachChild(newTeamMember);
+        newTeamMember.attachChild(memberGeometry);
+        newTeamMember.setLocalTranslation(new Vector3f(x, 20, z));
+        
+        SphereCollisionShape sphereShape = new SphereCollisionShape(radius);
+        
+        RigidBodyControl memberControl;memberControl = new RigidBodyControl(sphereShape, stepHeight);
+        newTeamMember.addControl(memberControl);
+        memberControl.setFriction(10f);
+        memberControl.setGravity(new Vector3f(1.0f, 1.0f, 1.0f));
+        newTeamMember.setShadowMode(ShadowMode.CastAndReceive);
+        bulletAppState.getPhysicsSpace().add(memberControl);
+    }
+    
+    
+    private void setupPlayer() {
         
         float radius = 2;
         playerNode = new Node("Player");
@@ -232,17 +331,20 @@ public class Main extends SimpleApplication {
         float stepHeight = 500f;
         playerControl = new RigidBodyControl(sphereShape, stepHeight);
         playerNode.addControl(playerControl);
-        playerControl.setFriction(12f);
-        playerControl.setGravity(new Vector3f(1.0f,1.0f,1.0f));
+        playerControl.setFriction(10f);
+        playerControl.setGravity(new Vector3f(1.0f, 1.0f, 1.0f));
         playerNode.setShadowMode(ShadowMode.CastAndReceive);
         bulletAppState.getPhysicsSpace().add(playerControl);
+        
+        xCamCoord = 0;
+        yCamCoord = 20;
+        zCamCoord = 0;
     }
     
     
     
     private void setupCamera() {
-        
-        flyCam.setEnabled(false);
+        flyCam.setEnabled(true);
         ChaseCamera camera = new ChaseCamera(cam, playerNode, inputManager);
         camera.setDragToRotate(false);
     }
@@ -250,7 +352,6 @@ public class Main extends SimpleApplication {
     
    
     private void setupKeys() {
-        
         inputManager.addMapping("CharLeft", new KeyTrigger(KeyInput.KEY_A));
         inputManager.addMapping("CharRight", new KeyTrigger(KeyInput.KEY_D));
         inputManager.addMapping("CharForward", new KeyTrigger(KeyInput.KEY_W));
