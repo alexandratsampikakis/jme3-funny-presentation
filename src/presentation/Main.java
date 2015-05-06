@@ -227,7 +227,7 @@ public class Main extends SimpleApplication {
         shootables = new ArrayList<Node>();
         
         int counter = 0;
-        double min = -500.0;
+        double min = -200.0;
         int max = 200;
         
         for (int i=0; i<mitvTeam.length; i++) {
