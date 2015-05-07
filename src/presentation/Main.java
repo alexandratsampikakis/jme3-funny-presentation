@@ -33,6 +33,7 @@ import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Sphere;
 import java.util.ArrayList;
 import java.util.List;
+import presentation.models.TeamMember;
 
 
 public class Main extends SimpleApplication {
@@ -54,6 +55,7 @@ public class Main extends SimpleApplication {
     
     float x, y, z, ry;
     private List<Node> shootables;
+    private List<TeamMember> teamMembers;
     private float xCamCoord, yCamCoord, zCamCoord;
     
     // Not used
@@ -212,18 +214,21 @@ public class Main extends SimpleApplication {
     
     
     private void setupTeamMembers() {
-        String[] mitvTeam = new String[10];
-        mitvTeam[0] = "Erik";
-        mitvTeam[1] = "Bengt";
-        mitvTeam[2] = "Foteini";
-        mitvTeam[3] = "Johan";
-        mitvTeam[4] = "Albert";
-        mitvTeam[5] = "Filipe";
-        mitvTeam[6] = "Alex";
-        mitvTeam[7] = "Calle";
-        mitvTeam[8] = "Miguel";
-        mitvTeam[9] = "Thomas";
+        String[] mitvTeam = new String[12];
+        mitvTeam[0] = "erik";
+        mitvTeam[1] = "bengt";
+        mitvTeam[2] = "foteini";
+        mitvTeam[3] = "johan";
+        mitvTeam[4] = "albert";
+        mitvTeam[5] = "filipe";
+        mitvTeam[6] = "alexandra";
+        mitvTeam[7] = "calle";
+        mitvTeam[8] = "miguel";
+        mitvTeam[9] = "thomas";
+        mitvTeam[10] = "mattias";
+        mitvTeam[11] = "sara";
         
+        teamMembers = new ArrayList<TeamMember>();
         shootables = new ArrayList<Node>();
         
         int counter = 0;
@@ -232,13 +237,24 @@ public class Main extends SimpleApplication {
         
         for (int i=0; i<mitvTeam.length; i++) {
             Node newTeamMember = new Node(mitvTeam[counter]);
+            
+            StringBuilder sb = new StringBuilder();
+            sb.append("Textures/");
+            sb.append(newTeamMember.getName());
+            sb.append(".png");
+            
+            String imageUrl = sb.toString();
+            
+            TeamMember member = new TeamMember(newTeamMember.getName(), imageUrl, false);
+            teamMembers.add(member);
+            
             shootables.add(newTeamMember);
             
             x = (float) (min * Math.random()) + max;
             z = (float) (min * Math.random()) + max;
             ry = (float) (min * Math.random()) + max;
             
-            getTeamMember(newTeamMember);
+            getTeamMember(newTeamMember, imageUrl);
             
             counter++;
         }
@@ -273,14 +289,14 @@ public class Main extends SimpleApplication {
     }
     
     
-    public void getTeamMember(Node newTeamMember) {
+    public void getTeamMember(Node newTeamMember, String imageUrl) {
         float radius = 2;
         float stepHeight = 500f;
         
         terrain.attachChild(newTeamMember);
         
         Material material = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
-        material.setTexture("DiffuseMap", assetManager.loadTexture("Textures/gustav.png"));
+        material.setTexture("DiffuseMap", assetManager.loadTexture(imageUrl));
         
         Geometry memberGeometry = new Geometry(newTeamMember.getName(), new Sphere(100, 100, radius));
         memberGeometry.setMaterial(material);
