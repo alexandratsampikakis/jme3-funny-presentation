@@ -35,6 +35,8 @@ import com.jme3.input.MouseInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
 import com.jme3.input.controls.MouseButtonTrigger;
+import com.jme3.math.FastMath;
+import com.jme3.math.Quaternion;
 import com.jme3.math.Ray;
 import com.jme3.math.Vector2f;
 import com.jme3.renderer.queue.RenderQueue.ShadowMode;
@@ -117,6 +119,8 @@ public class Main extends SimpleApplication {
         setupSky();
         
         setupTerrain();
+        
+        setupWalls();
         
         setupLight();
         
@@ -224,7 +228,7 @@ public class Main extends SimpleApplication {
         TerrainLodControl control = new TerrainLodControl(terrain, getCamera());
         terrain.addControl(control);
         terrain.setMaterial(matRock);
-        terrain.setLocalTranslation(x, y, z);
+        terrain.setLocalTranslation(0, 0, 0);
 	terrain.setLocalScale(2f, 1f, 2f);
         
         terrainPhysicsNode = new RigidBodyControl(CollisionShapeFactory.createMeshShape(terrain), 0);
@@ -466,12 +470,77 @@ public class Main extends SimpleApplication {
         debris.emitAllParticles();
     }
     
+    
+    
     protected void initMark() {
         Sphere sphere = new Sphere(100, 100, 2);
         mark = new Geometry("BOOM!", sphere);
         Material mark_mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         mark_mat.setColor("Color", ColorRGBA.Red);
         mark.setMaterial(mark_mat);
+    }
+    
+    
+    
+    private Spatial addSouthWall() {
+        Box box = new Box(256, 50, 10);
+        wall = new Geometry("Box", box);
+        Material mat_brick = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        mat_brick.setTexture("ColorMap", assetManager.loadTexture("Textures/Terrain/BrickWall/BrickWall.jpg"));
+        wall.setMaterial(mat_brick);
+        wall.setLocalTranslation(0, 0, -256);
+        terrain.attachChild(wall);
+        return wall;
+    }
+    
+    
+    
+    private Spatial addNorthWall() {
+        Box box = new Box(256, 50, 10);
+        wall = new Geometry("Box", box);
+        Material mat_brick = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        mat_brick.setTexture("ColorMap", assetManager.loadTexture("Textures/Terrain/BrickWall/BrickWall.jpg"));
+        wall.setMaterial(mat_brick);
+        wall.setLocalTranslation(0, 0, 256);
+        terrain.attachChild(wall);
+        return wall;
+    }
+    
+    
+    
+    private Spatial addWestWall() {
+        Box box = new Box(10, 50, 256);
+        wall = new Geometry("Box", box);
+        Material mat_brick = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        mat_brick.setTexture("ColorMap", assetManager.loadTexture("Textures/Terrain/BrickWall/BrickWall.jpg"));
+        wall.setMaterial(mat_brick);
+        wall.setLocalTranslation(-256, 0, 0);
+        
+        terrain.attachChild(wall);
+        return wall;
+    }
+    
+    
+    
+    private Spatial addEastWall() {
+        Box box = new Box(10, 50, 256);
+        wall = new Geometry("Box", box);
+        Material mat_brick = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        mat_brick.setTexture("ColorMap", assetManager.loadTexture("Textures/Terrain/BrickWall/BrickWall.jpg"));
+        wall.setMaterial(mat_brick);
+        wall.setLocalTranslation(256, 0, 0);
+        
+        terrain.attachChild(wall);
+        return wall;
+    }
+    
+    
+    
+    private void setupWalls() {
+        addEastWall();
+        addNorthWall();
+        addSouthWall();
+        addWestWall();
     }
     
 }
