@@ -66,35 +66,20 @@ public class Main extends SimpleApplication {
     PointLight pl;
     Geometry lightMdl;
     
-    private Node playerNode;
-    private Geometry playerGeometry;
-    private RigidBodyControl playerControl;
     private BulletAppState bulletAppState;
     
     float x, y, z, ry;
     private List<Node> shootables;
     private List<TeamMember> teamMembers;
-    private float xCamCoord, yCamCoord, zCamCoord;
     private List<Node> hitMembers;
     private List<Geometry> shootablesGeom;
     private int playerCounter;
     
-    // Not used
     ParticleEmitter fire, debris;
-    Spatial wall;
     Geometry mark;
-    private Geometry selectedCollisionObject;
     
     private boolean shouldRestartApp;
     protected static Main app;
-    
-    
-    private Vector3f walkDirection = new Vector3f(0, 0, 0);
-    
-    private boolean left = false,
-            right = false,
-            up = false,
-            down = false;
 
     
     
@@ -221,8 +206,8 @@ public class Main extends SimpleApplication {
         }
         
         /*
-         * Here we create the actual terrain. The tiles will be 33x33, and the total size of the
-         * terrain will be 129x129. It uses the heightmap we created to generate the height values.
+         * Here we create the actual terrain. The tiles will be 65x65, and the total size of the
+         * terrain will be 512x512. It uses the heightmap we created to generate the height values.
          */
         terrain = new TerrainQuad("terrain", 65, 513, heightmap.getHeightMap());
         TerrainLodControl control = new TerrainLodControl(terrain, getCamera());
@@ -482,56 +467,70 @@ public class Main extends SimpleApplication {
     
     
     
-    private Spatial addSouthWall() {
-        Box box = new Box(256, 50, 10);
-        wall = new Geometry("Box", box);
+    private void addSouthWall() {
+        Box box = new Box(512, 50, 1);
+        Spatial wall = new Geometry("Box", box);
         Material mat_brick = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        mat_brick.setTexture("ColorMap", assetManager.loadTexture("Textures/Terrain/BrickWall/BrickWall.jpg"));
-        wall.setMaterial(mat_brick);
-        wall.setLocalTranslation(0, 0, -256);
-        terrain.attachChild(wall);
-        return wall;
-    }
-    
-    
-    
-    private Spatial addNorthWall() {
-        Box box = new Box(256, 50, 10);
-        wall = new Geometry("Box", box);
-        Material mat_brick = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        mat_brick.setTexture("ColorMap", assetManager.loadTexture("Textures/Terrain/BrickWall/BrickWall.jpg"));
-        wall.setMaterial(mat_brick);
-        wall.setLocalTranslation(0, 0, 256);
-        terrain.attachChild(wall);
-        return wall;
-    }
-    
-    
-    
-    private Spatial addWestWall() {
-        Box box = new Box(10, 50, 256);
-        wall = new Geometry("Box", box);
-        Material mat_brick = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        mat_brick.setTexture("ColorMap", assetManager.loadTexture("Textures/Terrain/BrickWall/BrickWall.jpg"));
-        wall.setMaterial(mat_brick);
-        wall.setLocalTranslation(-256, 0, 0);
         
-        terrain.attachChild(wall);
-        return wall;
+        mat_brick.setTexture("ColorMap", assetManager.loadTexture("Textures/Terrain/BrickWall/BrickWall.jpg"));
+        wall.setMaterial(mat_brick);
+        wall.setLocalTranslation(0, 0, -512);
+        
+        RigidBodyControl wallControl = new RigidBodyControl(CollisionShapeFactory.createMeshShape(wall), 0);
+        wall.addControl(wallControl);
+        getPhysicsSpace().add(wallControl);
+        rootNode.attachChild(wall);
     }
     
     
     
-    private Spatial addEastWall() {
-        Box box = new Box(10, 50, 256);
-        wall = new Geometry("Box", box);
+    private void addNorthWall() {
+        Box box = new Box(512, 50, 1);
+        Spatial wall = new Geometry("Box", box);
         Material mat_brick = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        
         mat_brick.setTexture("ColorMap", assetManager.loadTexture("Textures/Terrain/BrickWall/BrickWall.jpg"));
         wall.setMaterial(mat_brick);
-        wall.setLocalTranslation(256, 0, 0);
+        wall.setLocalTranslation(0, 0, 512);
         
-        terrain.attachChild(wall);
-        return wall;
+        RigidBodyControl wallControl = new RigidBodyControl(CollisionShapeFactory.createMeshShape(wall), 0);
+        wall.addControl(wallControl);
+        getPhysicsSpace().add(wallControl);
+        rootNode.attachChild(wall);
+    }
+    
+    
+    
+    private void addWestWall() {
+        Box box = new Box(1, 50, 512);
+        Spatial wall = new Geometry("Box", box);
+        Material mat_brick = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        
+        mat_brick.setTexture("ColorMap", assetManager.loadTexture("Textures/Terrain/BrickWall/BrickWall.jpg"));
+        wall.setMaterial(mat_brick);
+        wall.setLocalTranslation(-512, 0, 0);
+        
+        RigidBodyControl wallControl = new RigidBodyControl(CollisionShapeFactory.createMeshShape(wall), 0);
+        wall.addControl(wallControl);
+        getPhysicsSpace().add(wallControl);
+        rootNode.attachChild(wall);
+    }
+    
+    
+    
+    private void addEastWall() {
+        Box box = new Box(1, 50, 512);
+        Spatial wall = new Geometry("Box", box);
+        Material mat_brick = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        
+        mat_brick.setTexture("ColorMap", assetManager.loadTexture("Textures/Terrain/BrickWall/BrickWall.jpg"));
+        wall.setMaterial(mat_brick);
+        wall.setLocalTranslation(512, 0, 0);
+        
+        RigidBodyControl wallControl = new RigidBodyControl(CollisionShapeFactory.createMeshShape(wall), 0);
+        wall.addControl(wallControl);
+        getPhysicsSpace().add(wallControl);
+        rootNode.attachChild(wall);
     }
     
     
