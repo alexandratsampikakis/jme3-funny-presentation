@@ -50,7 +50,7 @@ import java.util.logging.Logger;
 import presentation.models.TeamMember;
 
 
-public class Main extends SimpleApplication { //implements PhysicsCollisionListener {
+public class Main extends SimpleApplication {
     
     protected static final Logger logger = Logger.getLogger(Main.class.getName());
     
@@ -85,7 +85,6 @@ public class Main extends SimpleApplication { //implements PhysicsCollisionListe
     
     private boolean shouldRestartApp;
     protected static Main app;
-    protected static AppSettings settings;
     
     
     private Vector3f walkDirection = new Vector3f(0, 0, 0);
@@ -99,10 +98,6 @@ public class Main extends SimpleApplication { //implements PhysicsCollisionListe
     
     public static void main(String[] args) {
         app = new Main();
-        
-        settings = new AppSettings(true);
-        app.setShowSettings(false);
-        app.setSettings(settings);
         
         app.start();
     }
@@ -125,52 +120,21 @@ public class Main extends SimpleApplication { //implements PhysicsCollisionListe
         
         setupLight();
         
-//        setupPlayer();
         initCrossHairs();
-        initMark();
         
-//        setupCamera();
+        initMark();
         
         setupKeys();
         
         flyCam.setMoveSpeed(200);
-        
-//        bulletAppState.getPhysicsSpace().addCollisionListener(this);
     }
     
 
     
     
     @Override
-    public void simpleUpdate(float tpf) {
-//        Vector3f camDir = cam.getDirection().clone();
-//        Vector3f camLeft = cam.getLeft().clone();
-//        
-//        camDir.y = 0;  
-//        camLeft.y = 0;
-//        
-//        walkDirection.set(0, 0, 0);
-
-//        if (left) {
-//            walkDirection.addLocal(camDir.negate());
-//        }
-//        
-//        if (right) {
-//            walkDirection.addLocal(camDir);
-//        }
-//        
-//        if (up) {
-//            walkDirection.addLocal(camLeft);
-//        }
-//        
-//        if (down) {
-//            walkDirection.addLocal(camLeft.negate());
-//        }
-//        
-//        playerControl.setAngularVelocity(walkDirection.mult(10f));
-        
-        if (shouldRestartApp)
-        {
+    public void simpleUpdate(float tpf) {    
+        if (shouldRestartApp) {
             // TODO
         }
         
@@ -273,6 +237,7 @@ public class Main extends SimpleApplication { //implements PhysicsCollisionListe
     }
     
     
+    
     private void setupTeamMembers() {
         String[] mitvTeam = new String[13];
         mitvTeam[0] = "erik";
@@ -319,6 +284,7 @@ public class Main extends SimpleApplication { //implements PhysicsCollisionListe
     }
     
     
+    
     private PhysicsSpace getPhysicsSpace() {
         return bulletAppState.getPhysicsSpace();
     }
@@ -348,7 +314,7 @@ public class Main extends SimpleApplication { //implements PhysicsCollisionListe
         shootablesGeom.add(memberGeometry);
         
         newTeamMember.attachChild(memberGeometry);
-        newTeamMember.setLocalTranslation(new Vector3f(x, 20, z));
+        newTeamMember.setLocalTranslation(new Vector3f(x, 30, z));
         
         SphereCollisionShape sphereShape = new SphereCollisionShape(radius);
         
@@ -362,50 +328,19 @@ public class Main extends SimpleApplication { //implements PhysicsCollisionListe
     }
     
     
-    private void setupPlayer() {
-//        float radius = 2;
-//        playerNode = new Node("Player");
-//        playerGeometry = new Geometry("PlayerGeometry", new Sphere(100, 100, radius));
-//        rootNode.attachChild(playerNode);
-//        playerNode.attachChild(playerGeometry);
-//        Material material = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
-//        material.setTexture("DiffuseMap", assetManager.loadTexture("Textures/gustav.png"));
-//        playerGeometry.setMaterial(material);
-//        playerNode.setLocalTranslation(new Vector3f(0, 20, 0));
-//        SphereCollisionShape sphereShape = new SphereCollisionShape(radius);
-//        float stepHeight = 500f;
-//        playerControl = new RigidBodyControl(sphereShape, stepHeight);
-//        playerNode.addControl(playerControl);
-//        playerControl.setFriction(8f);
-//        playerControl.setGravity(new Vector3f(1.0f, 1.0f, 1.0f));
-//        playerNode.setShadowMode(ShadowMode.CastAndReceive);
-//        bulletAppState.getPhysicsSpace().add(playerControl);
-        
-        xCamCoord = 0;
-        yCamCoord = 20;
-        zCamCoord = 0;
-    }
-    
     
     protected void initCrossHairs() {
         guiNode.detachAllChildren();
         guiFont = assetManager.loadFont("Interface/Fonts/Default.fnt");
         BitmapText ch = new BitmapText(guiFont, false);
         ch.setSize(guiFont.getCharSet().getRenderedSize() * 2);
-        ch.setText("+"); // crosshairs
-        xCamCoord = settings.getWidth() / 2 - guiFont.getCharSet().getRenderedSize() / 3 * 2;
-        yCamCoord = settings.getHeight() / 2 + ch.getLineHeight() / 2;
-        zCamCoord = 0;
-        ch.setLocalTranslation(xCamCoord, yCamCoord, zCamCoord);
+        ch.setText("+");
+        int x = settings.getWidth() / 2 - guiFont.getCharSet().getRenderedSize() / 3 * 2;
+        float y = (settings.getHeight() / 2 + ch.getLineHeight() / 2);
+        int z = 0;
+        ch.setLocalTranslation(x, y, z);
         guiNode.attachChild(ch);
-    }
-    
-    
-    
-    private void setupCamera() {
-        flyCam.setEnabled(true);
-        ChaseCamera camera = new ChaseCamera(cam, playerNode, inputManager);
-        camera.setDragToRotate(false);
+        cam.setLocation(new Vector3f(1, 20, 1));
     }
     
     
@@ -419,18 +354,6 @@ public class Main extends SimpleApplication { //implements PhysicsCollisionListe
         
         inputManager.addMapping("Restart", new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
         inputManager.addListener(actionListener, "Restart");
-        
-//        inputManager.addMapping("CharLeft", new KeyTrigger(KeyInput.KEY_A));
-//        inputManager.addMapping("CharRight", new KeyTrigger(KeyInput.KEY_D));
-//        inputManager.addMapping("CharForward", new KeyTrigger(KeyInput.KEY_W));
-//        inputManager.addMapping("CharBackward", new KeyTrigger(KeyInput.KEY_S));
-//        inputManager.addMapping("Return", new KeyTrigger(KeyInput.KEY_SPACE));
-//        
-//        inputManager.addListener(actionListener, "CharLeft");
-//        inputManager.addListener(actionListener, "CharRight");
-//        inputManager.addListener(actionListener, "CharForward");
-//        inputManager.addListener(actionListener, "CharBackward");
-//        inputManager.addListener(actionListener, "Return");
     }
     
     
@@ -482,7 +405,7 @@ public class Main extends SimpleApplication { //implements PhysicsCollisionListe
                                 sb.append("sound.wav");
 
                                 AudioNode backgroundMusic = new AudioNode(assetManager, sb.toString(), false);
-//                                                              
+                                
                                 backgroundMusic.setPositional(false);
                                 backgroundMusic.setLooping(false);
                                 backgroundMusic.setVolume(10);
@@ -507,84 +430,6 @@ public class Main extends SimpleApplication { //implements PhysicsCollisionListe
         }
     };
     
-    
-//    private ActionListener actionListener = new ActionListener() {
-//
-//        public void onAction(String binding, boolean isPressed, float tpf) {
-//            
-//            if (binding.equals("CharLeft")) {
-//                
-//                if (isPressed) {
-//                    left = true;
-//                } else {
-//                    left = false;
-//                }
-//                
-//            } else if (binding.equals("CharRight")) {
-//                
-//                if (isPressed) {
-//                    right = true;
-//                } else {
-//                    right = false;
-//                }
-//                
-//            } else if (binding.equals("CharForward")) {
-//                
-//                if (isPressed) {
-//                    up = true;
-//                } else {
-//                    up = false;
-//                }
-//                
-//            } else if (binding.equals("CharBackward")) {
-//                
-//                if (isPressed) {
-//                    down = true;
-//                } else {
-//                    down = false;
-//                }
-//                
-//            } else if (binding.equals("Return")) {
-//                if (isPressed) {
-//                   context.restart(); // TODO do not work
-//                }
-//            }
-//        }
-//    };
-
-    
-    
-//    public void collision(PhysicsCollisionEvent event) {
-//        
-//        logger.log(Level.INFO, "Collition detected on A : " + event.getNodeA().getName());
-//
-//        logger.log(Level.INFO, "Collition detected on: B " + event.getNodeB().getName());
-//        
-////        if (!event.getNodeB().getName().equals("terrain") &&
-////            event.getNodeA().getName().equals("Player")) {
-////            
-////        logger.log(Level.INFO, "Collition detected on: A " + event.getNodeA().getName());
-////        logger.log(Level.INFO, "Collition detected on: B " + event.getNodeB().getName());
-////        
-////            for (Node teamMember : shootables) {
-////
-////                if (event.getNodeB().getName().equals(teamMember.getName())) {
-////
-////                    logger.log(Level.INFO, "Collition detected on B: " + teamMember.getName());
-////
-//////                    teamMember.setLocalTranslation(0, 20, 0);
-//////
-//////                    for (TeamMember member : teamMembers) {
-//////
-//////                        if (member.getName().equals(teamMember.getName())) {
-//////                            member.setTeamMemberHasBeenShot();
-//////                        }
-//////                    }
-////
-////                }
-////            }
-////        }
-//    }
     
     
     public void setFire(Node member) {
