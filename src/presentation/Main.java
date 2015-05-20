@@ -77,6 +77,7 @@ public class Main extends SimpleApplication {
     
     ParticleEmitter fire, debris;
     Geometry mark;
+    private BitmapText ch;
     
     private boolean shouldRestartApp;
     protected static Main app;
@@ -85,7 +86,6 @@ public class Main extends SimpleApplication {
     
     public static void main(String[] args) {
         app = new Main();
-        
         app.start();
     }
     
@@ -100,6 +100,7 @@ public class Main extends SimpleApplication {
         teamMembers = new ArrayList<TeamMember>();
         shootables = new ArrayList<Node>();
         shootablesGeom = new ArrayList<Geometry>();
+        playerCounter = 0;
         
         setupSky();
         
@@ -125,22 +126,6 @@ public class Main extends SimpleApplication {
     public void simpleUpdate(float tpf) {    
         if (shouldRestartApp) {
             // TODO
-        }
-        
-        for (int i=0; i<teamMembers.size(); i++) {
-            if (teamMembers.get(i).hasTeamMemberBeenShot()) {
-                shootablesGeom.get(i).removeFromParent();
-                playerCounter++;
-            }
-        }
-        
-        if (playerCounter == 13) {
-            mark.setLocalTranslation(new Vector3f(0, 20, 0)); // Let's interact - we mark the hit with a red dot.
-            terrain.attachChild(mark);
-            
-            // Red mark in the middle
-            // TODO add all team members around to this view
-            // make all geoms jump/rotate
         }
     }
 
@@ -243,12 +228,11 @@ public class Main extends SimpleApplication {
         mitvTeam[11] = "sara";
         mitvTeam[12] = "gustav";
         
-        int counter = 0;
         double min = -200.0;
         int max = 200;
         
         for (int i=0; i<mitvTeam.length; i++) {
-            Node newTeamMember = new Node(mitvTeam[counter]);
+            Node newTeamMember = new Node(mitvTeam[i]);
             
             StringBuilder sb = new StringBuilder();
             sb.append("Textures/");
@@ -266,9 +250,7 @@ public class Main extends SimpleApplication {
             z = (float) (min * Math.random()) + max;
             ry = (float) (min * Math.random()) + max;
             
-            getTeamMember(newTeamMember, imageUrl);
-            
-            counter++;
+            getTeamMember(newTeamMember, imageUrl, new Vector3f(x, 30, z));
         }
     }
     
@@ -288,7 +270,7 @@ public class Main extends SimpleApplication {
     
     
     
-    public void getTeamMember(Node newTeamMember, String imageUrl) {
+    public void getTeamMember(Node newTeamMember, String imageUrl, Vector3f placement) {
         float radius = 5;
         float stepHeight = 600f;
         
@@ -303,7 +285,7 @@ public class Main extends SimpleApplication {
         shootablesGeom.add(memberGeometry);
         
         newTeamMember.attachChild(memberGeometry);
-        newTeamMember.setLocalTranslation(new Vector3f(x, 30, z));
+        newTeamMember.setLocalTranslation(placement);
         
         SphereCollisionShape sphereShape = new SphereCollisionShape(radius);
         
@@ -321,7 +303,7 @@ public class Main extends SimpleApplication {
     protected void initCrossHairs() {
         guiNode.detachAllChildren();
         guiFont = assetManager.loadFont("Interface/Fonts/Default.fnt");
-        BitmapText ch = new BitmapText(guiFont, false);
+        ch = new BitmapText(guiFont, false);
         ch.setSize(guiFont.getCharSet().getRenderedSize() * 2);
         ch.setText("+");
         int x = settings.getWidth() / 2 - guiFont.getCharSet().getRenderedSize() / 3 * 2;
@@ -352,49 +334,49 @@ public class Main extends SimpleApplication {
             
             if (name.equals("Shoot") && !keyPressed) {
                 
-                CollisionResults results = new CollisionResults(); // 1. Reset results list.
-                Ray ray = new Ray(cam.getLocation(), cam.getDirection()); // 2. Aim the ray from cam loc to cam direction.
-                
+                CollisionResults results = new CollisionResults();
+                Ray ray = new Ray(cam.getLocation(), cam.getDirection());
+
                 if (hitMembers == null) {
                     hitMembers = new ArrayList<Node>();
                 }
-                
+
                 for (Node member : shootables) {
                     member.collideWith(ray, results);
                     hitMembers.add(member);
                 }
 
-                System.out.println("----- Collisions? " + results.size() + "-----"); // 4. Print the results
-                
+                System.out.println("----- Collisions? " + results.size() + "-----");
+
                 for (int i = 0; i < results.size(); i++) {
-                    
+
                     float dist = results.getCollision(i).getDistance();
                     Vector3f pt = results.getCollision(i).getContactPoint();
                     String hit = results.getCollision(i).getGeometry().getName();
-                    
+
                     for(TeamMember member : teamMembers) {
-                        
+
                         if (member.getName().equals(hit) && !member.hasTeamMemberBeenShot()) {
-                            
+
                             member.setTeamMemberHasBeenShot();
-                            
+
                             setFire(hitMembers.get(i));
                             fire.move(pt);
                             debris.move(pt);
-                            
+
                             if (member.getName().equals("alexandra") ||
                                 member.getName().equals("foteini") ||
                                 member.getName().equals("erik") ||
                                 member.getName().equals("gustav") ||
                                 member.getName().equals("albert")) {
-                                
+
                                 StringBuilder sb = new StringBuilder();
                                 sb.append("Sounds/");
                                 sb.append(member.getName());
                                 sb.append("sound.wav");
 
                                 AudioNode backgroundMusic = new AudioNode(assetManager, sb.toString(), false);
-                                
+
                                 backgroundMusic.setPositional(false);
                                 backgroundMusic.setLooping(false);
                                 backgroundMusic.setVolume(10);
@@ -403,10 +385,13 @@ public class Main extends SimpleApplication {
                             }
                         }
                     }
-                    
+
                     System.out.println("* Collision #" + i);
                     System.out.println("  You shot " + hit + " at " + pt + ", " + dist + " wu away.");
+
+                    updateGameStatus();
                 }
+                
             }
             
             else if (name.equals("Return") && keyPressed) {
@@ -540,6 +525,47 @@ public class Main extends SimpleApplication {
         addNorthWall();
         addSouthWall();
         addWestWall();
+    }
+    
+    
+    
+    private void updateGameStatus() {
+        System.out.println("playerCounter: " + playerCounter);
+        
+        for (int i=0; i<teamMembers.size(); i++) {
+            if (teamMembers.get(i).hasTeamMemberBeenShot()) {
+                rootNode.detachChildNamed(shootables.get(i).getName());
+                playerCounter++;
+            }
+        }
+
+        if (playerCounter % 13 == 0) {
+            mark.setLocalTranslation(new Vector3f(0, 40, 0));
+            terrain.attachChild(mark);
+
+            System.out.println("We are now done!!!");
+
+            ch.removeFromParent();
+            inputManager.removeListener(actionListener);
+            
+//        inputManager.addMapping("Shoot", new KeyTrigger(KeyInput.KEY_SPACE), new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
+//        inputManager.addListener(actionListener, "Shoot");
+            
+            cam.setLocation(new Vector3f(1, 20, 1));
+
+            putAllMembersBackInTerrain();
+        }
+    }
+    
+    
+    
+    private void putAllMembersBackInTerrain() {
+        for (int i=0; i<teamMembers.size(); i++) {
+            if (teamMembers.get(i).hasTeamMemberBeenShot()) {
+                Node member = shootables.get(i);
+                rootNode.attachChild(member);
+            }
+        }
     }
     
 }
