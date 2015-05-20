@@ -116,6 +116,8 @@ public class Main extends SimpleApplication {
         
         setupKeys();
         
+//        setupTimer();
+        
         flyCam.setMoveSpeed(200);
     }
     
@@ -264,7 +266,6 @@ public class Main extends SimpleApplication {
     
     private void setupLight() {
         DirectionalLight light = new DirectionalLight();
-        light.setDirection((new Vector3f(-0.5f, -1f, -0.5f)).normalize());
         rootNode.addLight(light);
     }
     
@@ -535,26 +536,39 @@ public class Main extends SimpleApplication {
         for (int i=0; i<teamMembers.size(); i++) {
             if (teamMembers.get(i).hasTeamMemberBeenShot()) {
                 rootNode.detachChildNamed(shootables.get(i).getName());
-                playerCounter++;
             }
         }
 
-        if (playerCounter % 13 == 0) {
+        if (IsGameFinished()) {
             mark.setLocalTranslation(new Vector3f(0, 40, 0));
             terrain.attachChild(mark);
 
             System.out.println("We are now done!!!");
 
+            /* Remove cross from screen */
             ch.removeFromParent();
+            
+            /* Remove input listener for shooting */
             inputManager.removeListener(actionListener);
             
-//        inputManager.addMapping("Shoot", new KeyTrigger(KeyInput.KEY_SPACE), new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
-//        inputManager.addListener(actionListener, "Shoot");
-            
-            cam.setLocation(new Vector3f(1, 20, 1));
+            cam.setLocation(new Vector3f(2, 20, 1));
 
             putAllMembersBackInTerrain();
         }
+    }
+    
+    
+    private boolean IsGameFinished() {
+        boolean IsGameFinished = true;
+        
+        for (int i=0; i<teamMembers.size(); i++) {
+            if (!teamMembers.get(i).hasTeamMemberBeenShot()) {
+                IsGameFinished = false;
+                break;
+            }
+        }
+        
+        return IsGameFinished;
     }
     
     
@@ -566,6 +580,17 @@ public class Main extends SimpleApplication {
                 rootNode.attachChild(member);
             }
         }
+    }
+    
+    
+    
+    private void setupTimer() {
+        ch.setText("MMMMMMM");
+        int x = settings.getWidth();
+        float y = (settings.getHeight());
+        int z = 0;
+        ch.setLocalTranslation(x, y, z);
+        guiNode.attachChild(ch);
     }
     
 }
