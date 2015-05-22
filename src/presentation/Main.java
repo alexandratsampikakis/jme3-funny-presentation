@@ -1,15 +1,11 @@
 package presentation;
 
-import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
 import com.jme3.audio.AudioNode;
 import com.jme3.bullet.BulletAppState;
 import com.jme3.bullet.PhysicsSpace;
-import com.jme3.bullet.collision.PhysicsCollisionEvent;
-import com.jme3.bullet.collision.PhysicsCollisionListener;
 import com.jme3.bullet.control.RigidBodyControl;
 import com.jme3.font.BitmapText;
-import com.jme3.input.ChaseCamera;
 import com.jme3.light.DirectionalLight;
 import com.jme3.light.PointLight;
 import com.jme3.material.Material;
@@ -26,7 +22,9 @@ import com.jme3.texture.Texture;
 import com.jme3.util.SkyFactory;
 import com.jme3.bullet.collision.shapes.SphereCollisionShape;
 import com.jme3.bullet.util.CollisionShapeFactory;
-import com.jme3.collision.CollisionResult;
+import com.jme3.cinematic.MotionPath;
+import com.jme3.cinematic.MotionPathListener;
+import com.jme3.cinematic.events.MotionEvent;
 import com.jme3.collision.CollisionResults;
 import com.jme3.effect.ParticleEmitter;
 import com.jme3.effect.ParticleMesh;
@@ -38,16 +36,12 @@ import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Ray;
-import com.jme3.math.Vector2f;
 import com.jme3.renderer.queue.RenderQueue.ShadowMode;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Sphere;
-import com.jme3.system.AppSettings;
-import java.lang.reflect.Member;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import presentation.models.TeamMember;
 
@@ -81,6 +75,13 @@ public class Main extends SimpleApplication {
     
     private boolean shouldRestartApp;
     protected static Main app;
+    
+    private MotionPath path;
+    private List<MotionEvent> motionControlList;
+    private BitmapText wayPointsText;
+    
+    private long tStart;
+    private long tEnd;
 
     
     
@@ -100,6 +101,8 @@ public class Main extends SimpleApplication {
         teamMembers = new ArrayList<TeamMember>();
         shootables = new ArrayList<Node>();
         shootablesGeom = new ArrayList<Geometry>();
+        motionControlList = new ArrayList<MotionEvent>();
+        
         playerCounter = 0;
         
         setupSky();
@@ -116,9 +119,11 @@ public class Main extends SimpleApplication {
         
         setupKeys();
         
-//        setupTimer();
+        setupMotionPath();
         
         flyCam.setMoveSpeed(200);
+        
+        tStart = System.currentTimeMillis();
     }
     
 
@@ -347,7 +352,7 @@ public class Main extends SimpleApplication {
                     hitMembers.add(member);
                 }
 
-                System.out.println("----- Collisions? " + results.size() + "-----");
+//                System.out.println("----- Collisions? " + results.size() + "-----");
 
                 for (int i = 0; i < results.size(); i++) {
 
@@ -387,8 +392,8 @@ public class Main extends SimpleApplication {
                         }
                     }
 
-                    System.out.println("* Collision #" + i);
-                    System.out.println("  You shot " + hit + " at " + pt + ", " + dist + " wu away.");
+//                    System.out.println("* Collision #" + i);
+//                    System.out.println("  You shot " + hit + " at " + pt + ", " + dist + " wu away.");
 
                     updateGameStatus();
                 }
@@ -531,7 +536,7 @@ public class Main extends SimpleApplication {
     
     
     private void updateGameStatus() {
-        System.out.println("playerCounter: " + playerCounter);
+//        System.out.println("playerCounter: " + playerCounter);
         
         for (int i=0; i<teamMembers.size(); i++) {
             if (teamMembers.get(i).hasTeamMemberBeenShot()) {
@@ -540,20 +545,29 @@ public class Main extends SimpleApplication {
         }
 
         if (IsGameFinished()) {
+            tEnd = System.currentTimeMillis();
+            long tDelta = tEnd - tStart;
+            double elapsedSeconds = tDelta / 1000.0;
+
             mark.setLocalTranslation(new Vector3f(0, 40, 0));
             terrain.attachChild(mark);
 
             System.out.println("We are now done!!!");
 
-            /* Remove cross from screen */
-            ch.removeFromParent();
+            /* Print time to kill all */
+            ch.setSize(70f);
+            ch.setText("Time to kill all: " + elapsedSeconds + " seconds");
             
             /* Remove input listener for shooting */
             inputManager.removeListener(actionListener);
-            
-            cam.setLocation(new Vector3f(2, 20, 1));
 
             putAllMembersBackInTerrain();
+            makeAllMembersMove();
+            
+            wayPointsText.setText("                    YOU WIN! \n"
+                    + "But as you see, the team is not collected and all over the place as always so,\n"
+                    + "                                YOU LOSE!");
+            wayPointsText.setLocalTranslation((cam.getWidth() - wayPointsText.getLineWidth()) / 2, cam.getHeight(), 0);
         }
     }
     
@@ -584,13 +598,63 @@ public class Main extends SimpleApplication {
     
     
     
-    private void setupTimer() {
-        ch.setText("MMMMMMM");
-        int x = settings.getWidth();
-        float y = (settings.getHeight());
-        int z = 0;
-        ch.setLocalTranslation(x, y, z);
-        guiNode.attachChild(ch);
+    private void setupMotionPath() {
+        
+        for (int i=0; i<shootablesGeom.size(); i++) {
+            
+            path = new MotionPath();
+            float yy = shootablesGeom.get(i).getLocalTranslation().y;
+            
+            path.addWayPoint(new Vector3f(100, yy, 0));
+            path.addWayPoint(new Vector3f(100, yy, 0));
+            path.addWayPoint(new Vector3f(-400, yy, 0));
+            path.addWayPoint(new Vector3f(-400, yy, 0));
+            path.addWayPoint(new Vector3f(-400, yy, 0));
+            path.addWayPoint(new Vector3f(100, yy, 0));
+            path.addWayPoint(new Vector3f(100, yy, 0));
+            path.addWayPoint(new Vector3f(150, yy, 0));
+            
+            path.enableDebugShape(assetManager, rootNode);
+
+            MotionEvent motionControl = new MotionEvent(shootablesGeom.get(i), path);
+            motionControl.setDirectionType(MotionEvent.Direction.PathAndRotation);
+            motionControl.setRotation(new Quaternion().fromAngleNormalAxis(-FastMath.HALF_PI, Vector3f.UNIT_Y));
+            motionControl.setInitialDuration(10f);
+            motionControl.setSpeed(1f);   
+            
+            motionControlList.add(motionControl);
+
+            guiFont = assetManager.loadFont("Interface/Fonts/Default.fnt");
+            wayPointsText = new BitmapText(guiFont, false);
+            wayPointsText.setSize(70f);
+            guiNode.attachChild(wayPointsText);
+
+            path.addListener(new MotionPathListener() {
+
+                public void onWayPointReach(MotionEvent control, int wayPointIndex) {
+                    
+                    if (path.getNbWayPoints() == wayPointIndex + 1) {
+//                        for (MotionEvent motionEvent : motionControlList) {
+//                            motionEvent.stop();
+//                        }
+                    } else {
+//                        wayPointsText.setText(control.getSpatial().getName() + " Reached way point " + wayPointIndex);
+                    }
+                }
+            });
+        }
+    }
+    
+    
+    
+    private void makeAllMembersMove() {
+        for (Geometry geom : shootablesGeom) {
+            geom.removeControl(terrainPhysicsNode);
+        }
+        
+        for (MotionEvent motionEvent : motionControlList) {
+            motionEvent.play();
+        }
     }
     
 }
