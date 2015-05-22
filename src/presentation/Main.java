@@ -4,6 +4,7 @@ import com.jme3.app.SimpleApplication;
 import com.jme3.audio.AudioNode;
 import com.jme3.bullet.BulletAppState;
 import com.jme3.bullet.PhysicsSpace;
+import com.jme3.bullet.collision.shapes.CollisionShape;
 import com.jme3.bullet.control.RigidBodyControl;
 import com.jme3.font.BitmapText;
 import com.jme3.light.DirectionalLight;
@@ -36,6 +37,7 @@ import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Ray;
+import com.jme3.math.Vector2f;
 import com.jme3.renderer.queue.RenderQueue.ShadowMode;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
@@ -108,6 +110,8 @@ public class Main extends SimpleApplication {
         setupSky();
         
         setupTerrain();
+        
+        setupTrees();
         
         setupWalls();
         
@@ -215,6 +219,65 @@ public class Main extends SimpleApplication {
         getPhysicsSpace().add(terrainPhysicsNode);
         
         setupTeamMembers();
+    }
+    
+    
+    private void setupTrees() {
+        createTrees(-300, 500, 27, 100, 2);
+        createTrees(-210, 315, 40, 50, 2);
+        createTrees(-20, 130, 25, 50, 5);
+        createTrees(-50, 0, 40, 250, 5);
+        createTrees(-150, 10, 10, 0, 6);
+        createTrees(-100, 150, 40, 100, 5);
+        createTrees(-250, 200, 28, 200, 3);
+        
+        createTrees(300, 500, 27, 100, 2);
+        createTrees(210, 315, 40, 50, 2);
+        createTrees(20, 130, 40, 50, 5);
+        createTrees(50, 0, 10, 250, 5);
+        createTrees(150, 10, 10, 0, 6);
+        createTrees(100, 150, 15, 100, 5);
+        createTrees(250, 200, 40, 200, 3);
+        
+        createTrees(400, 500, 7, 100, 2);
+        createTrees(310, 315, 40, 50, 2);
+        createTrees(120, 130, 5, 50, 5);
+        createTrees(150, 0, 10, 250, 5);
+        createTrees(250, 10, 40, 0, 6);
+        createTrees(200, 150, 15, 100, 5);
+        createTrees(350, 200, 8, 200, 3);
+        
+        createTrees(400, -500, 10, 100, 2);
+        createTrees(310, -315, 10, 50, 2);
+        createTrees(120, -130, 20, 50, 5);
+        createTrees(150, 0, 15, 250, 5);
+        createTrees(250, -10, 10, 0, 6);
+        createTrees(200, -150, 15, 100, 5);
+        createTrees(350, -200, 40, 200, 3);
+        
+        createTrees(400, -5, 10, 100, 2);
+        createTrees(310, -38, 10, 50, 2);
+        createTrees(120, -130, 20, 50, 5);
+        createTrees(150, 20, 15, 250, 5);
+        createTrees(250, -100, 10, 0, 6);
+        createTrees(200, -250, 15, 100, 5);
+        createTrees(350, -300, 40, 200, 3);
+    }
+    
+    
+    public void createTrees(float xTree, float zTree, float sTree, float rTree, int toHigherTree) {
+        Spatial tree = assetManager.loadModel("Models/Tree/Tree.mesh.xml");
+        Vector2f xz = new Vector2f(xTree, zTree);
+        float yTree = terrain.getHeightmapHeight(xz)+toHigherTree;
+        tree.setLocalTranslation(xTree, yTree, zTree);
+        tree.scale(sTree);
+        tree.rotate(0, rTree, 0);
+        
+        CollisionShape treeCollisionShape = CollisionShapeFactory.createMeshShape((Node) tree);
+        RigidBodyControl treeControl = new RigidBodyControl(treeCollisionShape, 0);
+        tree.addControl(treeControl);
+        terrain.attachChild(tree);
+        bulletAppState.getPhysicsSpace().add(treeControl);
     }
     
     
@@ -549,8 +612,8 @@ public class Main extends SimpleApplication {
             long tDelta = tEnd - tStart;
             double elapsedSeconds = tDelta / 1000.0;
 
-            mark.setLocalTranslation(new Vector3f(0, 40, 0));
-            terrain.attachChild(mark);
+//            mark.setLocalTranslation(new Vector3f(0, 40, 0));
+//            terrain.attachChild(mark);
 
             System.out.println("We are now done!!!");
 
@@ -633,13 +696,13 @@ public class Main extends SimpleApplication {
 
                 public void onWayPointReach(MotionEvent control, int wayPointIndex) {
                     
-                    if (path.getNbWayPoints() == wayPointIndex + 1) {
+//                    if (path.getNbWayPoints() == wayPointIndex + 1) {
 //                        for (MotionEvent motionEvent : motionControlList) {
 //                            motionEvent.stop();
 //                        }
-                    } else {
+//                    } else {
 //                        wayPointsText.setText(control.getSpatial().getName() + " Reached way point " + wayPointIndex);
-                    }
+//                    }
                 }
             });
         }
