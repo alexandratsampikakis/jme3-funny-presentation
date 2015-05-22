@@ -437,7 +437,9 @@ public class Main extends SimpleApplication {
                                 member.getName().equals("foteini") ||
                                 member.getName().equals("erik") ||
                                 member.getName().equals("gustav") ||
-                                member.getName().equals("albert")) {
+                                member.getName().equals("albert") ||
+                                member.getName().equals("johan") ||
+                                member.getName().equals("filipe")) {
 
                                 StringBuilder sb = new StringBuilder();
                                 sb.append("Sounds/");
@@ -629,7 +631,7 @@ public class Main extends SimpleApplication {
             
             wayPointsText.setText("                    YOU WIN! \n"
                     + "But as you see, the team is not collected and all over the place as always so,\n"
-                    + "                                YOU LOSE!");
+                    + "                                YOU LOOOOOOOSE!");
             wayPointsText.setLocalTranslation((cam.getWidth() - wayPointsText.getLineWidth()) / 2, cam.getHeight(), 0);
         }
     }
@@ -677,7 +679,7 @@ public class Main extends SimpleApplication {
             path.addWayPoint(new Vector3f(100, yy, 0));
             path.addWayPoint(new Vector3f(150, yy, 0));
             
-            path.enableDebugShape(assetManager, rootNode);
+//            path.enableDebugShape(assetManager, rootNode);
 
             MotionEvent motionControl = new MotionEvent(shootablesGeom.get(i), path);
             motionControl.setDirectionType(MotionEvent.Direction.PathAndRotation);
